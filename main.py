@@ -579,26 +579,17 @@ def sha256_of(path):
 
 
 def main():
-    here = Path(__file__).resolve().parent
     img = build_page()
-    local_target = here / "entry.png"
-    img.save(local_target, format="PNG")
-    data = local_target.read_bytes()
+    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target = out_dir / "entry.png"
+    img.save(target, format="PNG")
+    data = target.read_bytes()
     if not data.startswith(PNG_SIGNATURE):
         print("error: entry.png is not a PNG file", file=sys.stderr)
         return 1
     digest = hashlib.sha256(data).hexdigest()
-
-    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
-    if out_dir.resolve() != here.resolve():
-        out_dir.mkdir(parents=True, exist_ok=True)
-        target = out_dir / "entry.png"
-        target.write_bytes(data)
-        if sha256_of(target) != digest:
-            print("error: copy of entry.png does not match the source", file=sys.stderr)
-            return 1
-        print(f"wrote {target} ({len(data)} bytes, sha256 {digest})")
-    print(f"wrote {local_target} ({len(data)} bytes, sha256 {digest})")
+    print(f"wrote {target} ({len(data)} bytes, sha256 {digest})")
     return 0
 
 
