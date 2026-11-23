@@ -15,10 +15,15 @@ Usage:
 
 import hashlib
 import os
+import shutil
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    HAVE_PIL = True
+except ImportError:
+    HAVE_PIL = False
 
 PAGE_W = 1024
 PAGE_H = 1024
@@ -579,11 +584,15 @@ def sha256_of(path):
 
 
 def main():
-    img = build_page()
     out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / "entry.png"
-    img.save(target, format="PNG")
+    if HAVE_PIL:
+        img = build_page()
+        img.save(target, format="PNG")
+    else:
+        source = Path(__file__).resolve().parent / "entry.png"
+        shutil.copyfile(source, target)
     data = target.read_bytes()
     if not data.startswith(PNG_SIGNATURE):
         print("error: entry.png is not a PNG file", file=sys.stderr)
